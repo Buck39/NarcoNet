@@ -386,83 +386,44 @@ public class SyncService
         NarcoNetConfig config,
         CancellationToken cancellationToken = default)
     {
-        DateTime startTime = DateTime.UtcNow;
-        _logger.LogInformation("Detecting file changes since last startup...");
-
-        // Load existing changelog and snapshot
-        FileChangeLog changeLog = await _changeLogService.LoadChangeLogAsync(cancellationToken);
-        FileSystemSnapshot? lastSnapshot = await _changeLogService.LoadSnapshotAsync(cancellationToken);
-
-        // Build current snapshot (without hashes initially for speed)
-        FileSystemSnapshot currentSnapshot = await BuildSnapshotAsync(
-            syncPaths, 
-            config, 
-            changeLog.CurrentSequence,
+        await ExecuteDetectionWithLoggingAsync(
+            "Detecting file changes since last startup...",
+            "Change detection completed in {Elapsed:F0}ms",
+            syncPaths,
+            config,
             cancellationToken);
-
-        // Detect changes between snapshots
-        List<FileChangeEntry> changes = await DetectChangesAsync(
-            lastSnapshot,
-            currentSnapshot,
-            changeLog.CurrentSequence,
-            cancellationToken);
-
-        if (changes.Count > 0)
-        {
-            _logger.LogInformation("Detected {Count} file changes", changes.Count);
-            
-            // Log summary
-            int added = changes.Count(c => c.Operation == ChangeOperation.Add);
-            int modified = changes.Count(c => c.Operation == ChangeOperation.Modify);
-            int deleted = changes.Count(c => c.Operation == ChangeOperation.Delete);
-            _logger.LogInformation("Changes: {Added} added, {Modified} modified, {Deleted} deleted", 
-                added, modified, deleted);
-
-            // Append changes to changelog
-            await _changeLogService.AppendChangesAsync(changes, cancellationToken);
-
-            // Update snapshot with hashes for changed files
-            foreach (var change in changes.Where(c => c.Operation != ChangeOperation.Delete))
-            {
-                if (currentSnapshot.Files.TryGetValue(change.FilePath, out FileMetadata? metadata))
-                {
-                    currentSnapshot.Files[change.FilePath] = metadata with { Hash = change.Hash };
-                }
-            }
-        }
-        else
-        {
-            _logger.LogInformation("No file changes detected");
-        }
-
-        // Save updated snapshot
-        FileSystemSnapshot updatedSnapshot = currentSnapshot with
-        {
-            SequenceNumber = changeLog.CurrentSequence + changes.Count,
-            Timestamp = DateTime.UtcNow
-        };
-        await _changeLogService.SaveSnapshotAsync(updatedSnapshot, cancellationToken);
-
-        // Prune old changelog entries
-        await _changeLogService.PruneOldEntriesAsync(30, cancellationToken);
-
-        double elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
-        _logger.LogInformation("Change detection completed in {Elapsed:F0}ms", elapsed);
     }
 
     /// <summary>
     ///     Perform an on-demand recheck of the configured sync paths, comparing
     ///     current filesystem state to the last saved snapshot. This is similar
     ///     to the startup detection logic but intended to be called at runtime
-    ///     (e.g. from an HTTP endpoint) and returns the detected changes.
+    ///     (e.g. from an HTTPS endpoint) and returns the detected changes.
     /// </summary>
     public async Task<List<FileChangeEntry>> RecheckAsync(
         List<SyncPath> syncPaths,
         NarcoNetConfig config,
         CancellationToken cancellationToken = default)
     {
-        DateTime startTime = DateTime.UtcNow;
+        return await ExecuteDetectionWithLoggingAsync(
+            "Performing recheck...",
+            "Recheck completed in {Elapsed:F0}ms",
+            syncPaths,
+            config,
+            cancellationToken);
+    }
 
+    private record DetectionResult(List<FileChangeEntry> Changes, long BeforeSequence, long AfterSequence, FileSystemSnapshot UpdatedSnapshot);
+
+    /// <summary>
+    /// Shared detection flow: load changelog/snapshot, build current snapshot, detect changes,
+    /// append changes, update and save snapshot, prune old entries. Returns details for callers.
+    /// </summary>
+    private async Task<DetectionResult> RunDetectionAndSaveAsync(
+        List<SyncPath> syncPaths,
+        NarcoNetConfig config,
+        CancellationToken cancellationToken = default)
+    {
         // Load existing changelog and snapshot
         FileChangeLog changeLog = await _changeLogService.LoadChangeLogAsync(cancellationToken);
         FileSystemSnapshot? lastSnapshot = await _changeLogService.LoadSnapshotAsync(cancellationToken);
@@ -507,9 +468,39 @@ public class SyncService
         // Prune old changelog entries
         await _changeLogService.PruneOldEntriesAsync(30, cancellationToken);
 
-        double elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
-        _logger.LogInformation("Recheck completed in {Elapsed:F0}ms (detected {Count} changes)", elapsed, changes.Count);
+        return new DetectionResult(changes, changeLog.CurrentSequence, updatedSnapshot.SequenceNumber, updatedSnapshot);
+    }
 
-        return changes;
+    private async Task<List<FileChangeEntry>> ExecuteDetectionWithLoggingAsync(
+        string startMessage,
+        string completionMessageFormat,
+        List<SyncPath> syncPaths,
+        NarcoNetConfig config,
+        CancellationToken cancellationToken = default)
+    {
+        DateTime startTime = DateTime.UtcNow;
+        _logger.LogInformation(startMessage);
+
+        var result = await RunDetectionAndSaveAsync(syncPaths, config, cancellationToken);
+
+        if (result.Changes.Count > 0)
+        {
+            _logger.LogInformation("Detected {Count} file changes", result.Changes.Count);
+
+            int added = result.Changes.Count(c => c.Operation == ChangeOperation.Add);
+            int modified = result.Changes.Count(c => c.Operation == ChangeOperation.Modify);
+            int deleted = result.Changes.Count(c => c.Operation == ChangeOperation.Delete);
+            _logger.LogInformation("Changes: {Added} added, {Modified} modified, {Deleted} deleted",
+                added, modified, deleted);
+        }
+        else
+        {
+            _logger.LogInformation("No file changes detected");
+        }
+
+        double elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+        _logger.LogInformation(completionMessageFormat, elapsed);
+
+        return result.Changes;
     }
 }
