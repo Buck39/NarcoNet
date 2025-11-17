@@ -29,7 +29,7 @@ public static class NarcoNetVersion
 
     <ItemGroup>
         <Reference Include="UnityEngine">
-            <HintPath>..\References\UnityEngine.dll</HintPath>
+          <HintPath>..\..\..\EscapeFromTarkov_Data\Managed\UnityEngine.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.AccessibilityModule">
             <HintPath>..\References\UnityEngine.AccessibilityModule.dll</HintPath>
@@ -65,7 +65,7 @@ public static class NarcoNetVersion
             <HintPath>..\References\UnityEngine.ContentLoadModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.CoreModule">
-            <HintPath>..\References\UnityEngine.CoreModule.dll</HintPath>
+          <HintPath>..\..\..\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.CrashReportingModule">
             <HintPath>..\References\UnityEngine.CrashReportingModule.dll</HintPath>
@@ -243,12 +243,12 @@ public static class NarcoNetVersion
         </PropertyGroup>
 
         <!-- Create output directory structure -->
-        <MakeDir Directories="$(BuildOutputDir)"/>
+        <MakeDir Directories="$(BuildOutputDir)" />
 
         <!-- Copy the Utilities DLL -->
-        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(BuildOutputDir)"/>
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(BuildOutputDir)" />
 
-        <Message Text="NarcoNet.Utilities copied to: $(BuildOutputDir)" Importance="high"/>
+        <Message Text="NarcoNet.Utilities copied to: $(BuildOutputDir)" Importance="high" />
     </Target>
 
 </Project>

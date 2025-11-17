@@ -8,7 +8,7 @@
 
     <ItemGroup>
         <Reference Include="UnityEngine">
-            <HintPath>..\References\UnityEngine.dll</HintPath>
+          <HintPath>..\..\..\EscapeFromTarkov_Data\Managed\UnityEngine.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.AccessibilityModule">
             <HintPath>..\References\UnityEngine.AccessibilityModule.dll</HintPath>
@@ -44,7 +44,7 @@
             <HintPath>..\References\UnityEngine.ContentLoadModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.CoreModule">
-            <HintPath>..\References\UnityEngine.CoreModule.dll</HintPath>
+          <HintPath>..\..\..\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.CrashReportingModule">
             <HintPath>..\References\UnityEngine.CrashReportingModule.dll</HintPath>
@@ -71,7 +71,7 @@
             <HintPath>..\References\UnityEngine.ImageConversionModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.IMGUIModule">
-            <HintPath>..\References\UnityEngine.IMGUIModule.dll</HintPath>
+          <HintPath>..\..\..\EscapeFromTarkov_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.InputLegacyModule">
             <HintPath>..\References\UnityEngine.InputLegacyModule.dll</HintPath>
@@ -143,7 +143,7 @@
             <HintPath>..\References\UnityEngine.TextCoreTextEngineModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.TextRenderingModule">
-            <HintPath>..\References\UnityEngine.TextRenderingModule.dll</HintPath>
+          <HintPath>..\..\..\EscapeFromTarkov_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.TilemapModule">
             <HintPath>..\References\UnityEngine.TilemapModule.dll</HintPath>
@@ -152,7 +152,7 @@
             <HintPath>..\References\UnityEngine.TLSModule.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.UI">
-            <HintPath>..\References\UnityEngine.UI.dll</HintPath>
+          <HintPath>..\..\..\EscapeFromTarkov_Data\Managed\UnityEngine.UI.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.UIElementsModule">
             <HintPath>..\References\UnityEngine.UIElementsModule.dll</HintPath>
@@ -217,7 +217,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\NarcoNet.Utilities\NarcoNet.Utilities.csproj"/>
+        <ProjectReference Include="..\NarcoNet.Utilities\NarcoNet.Utilities.csproj" />
     </ItemGroup>
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
@@ -226,12 +226,12 @@
         </PropertyGroup>
 
         <!-- Create output directory structure -->
-        <MakeDir Directories="$(BuildOutputDir)"/>
+        <MakeDir Directories="$(BuildOutputDir)" />
 
         <!-- Copy the UI DLL -->
-        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(BuildOutputDir)"/>
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(BuildOutputDir)" />
 
-        <Message Text="NarcoNet.UI copied to: $(BuildOutputDir)" Importance="high"/>
+        <Message Text="NarcoNet.UI copied to: $(BuildOutputDir)" Importance="high" />
     </Target>
 
 </Project>
